@@ -18,21 +18,50 @@
 # include <sys/types.h>
 # include <stddef.h>
 # include <limits.h>
+# include <errno.h>
 
 // 127 and 126 on bash error codeja, cmd not found, ja cannot execute
 // bashissa 126 cannot-execute triggeroityy yleensa jos bad permissions tai shebang puuttuu
-# define CMD_ERROR_NOTFOUND		127
-# define CMD_ERROR_CANNOTEX		126
+# define ERROR_INVALID_EXIT		255
+# define ERROR_S_TERMINATED		130
+# define ERROR_CMD_NOTFOUND		127
+# define ERROR_CMD_CANTEXEC		126
 # define ERROR					-1
 # define SUCCESS				0
 
-typedef struct s_state			t_state;
-typedef struct s_cmd			t_cmd;
+typedef struct s_state
+{
+	int			pid_count;
+	pid_t		*pids;
+	int			exit_status; //edellisen exit status: tarvitaan $? komentoon
+	char		**env_var; //environment variableille
+	//whatever else is required to track globl status fo executions
+}	t_state;
 
-typedef enum
+typedef struct s_cmd
+{
+	e_cmd_type		type;
+	char			**argv; //MIKA we can change this memb if parser refines args to data.
+	struct s_cmd	*left; //linked list kaytannossa.
+	struct s_cmd	*right;
+	int				exit_status;
+}	t_cmd;
+
+typedef enum e_cmd_type
 {
 	SIMPLE,
 	PIPELINE
-}	e_cmd_type;
+}	t_cmd_type;
+
+typedef enum e_builtin_type
+{
+	ECHO,
+	CD,
+	PWD,
+	EXPORT,
+	UNSET,
+	ENV,
+	EXIT
+}	t_builtin;
 
 #endif
